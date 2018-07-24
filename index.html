@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Like It</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    .container {
+      text-align: center;
+      width: 600px;
+      margin: 0 auto;
+    }
+    input {
+      width: 100%;
+      border: none;
+      font-size: 18px;
+      font-weight: 400;
+      line-height: 33px;
+      padding: 4px 12px;
+      color: #555;
+      border: solid 1px #ddd;
+      transition: border-color 0.3s ease-in-out;
+    }
+    input:focus {
+      outline: none;
+      border-color: rgb(37, 131, 194);
+    }
+
+    button {
+      border: solid 1px #ccc;
+      height: 35px;
+      line-height: 33px;
+      padding: 0 12px;
+      font-size: 14px;
+      color: #888;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #eee;
+    }
+    button:active {
+      background: #ddd;
+    }
+    button:focus {
+      outline: none;
+    }
+    #list {
+      padding: 20px 0;
+    }
+    .item {
+      user-select: none;
+      display: flex;
+      text-align: left;
+      width: 600px;
+      cursor: pointer;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      border-bottom: dashed 1px #eee;
+      transition: all 450ms cubic-bezier(0.23, 1, 0.32, 1) 0ms;
+    }
+    .item:hover {
+      box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 6px, rgba(0, 0, 0, 0.12) 0px 1px 4px;
+    }
+    .name {
+      width: 420px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .like {
+      padding-left: 8px;
+      line-height: 21px;
+      font-size: 12px;
+      color: rgb(243, 156, 156);
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+    .item:hover .like {
+      opacity: 1;
+    }
+    .count {
+      font-size: 12px;
+      border-radius: 4px;
+      padding: 2px 8px;
+      margin-right: 12px;
+      color: #fff;
+      background: rgb(104, 180, 243);
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <form id="add">
+    <input type="text" placeholder="添加话题" id="topicInput">
+  </form>
+  <div id="list"></div> 
+</div>
+<script>
+  $(function() {
+    var url = 'http://0.0.0.0:3456/api';
+    var fetchJson = function(api, data) {
+      return fetch(url + api, {
+        method: 'post',
+        body: JSON.stringify(data),
+        headers: {
+            "Content-Type": "application/json; charset=utf-8",
+        },
+      }).then(function(res) {
+        return res.json();
+      });
+    };
+
+    var addTopic = function(name) {
+      return fetchJson('/topic/add', {
+        name: name,
+      });
+    };
+
+    var likeTopic = function(_id) {
+      return fetchJson('/topic/like', {
+        _id: _id,
+      });
+    };
+ 
+    var getTopics = function() {
+      return fetchJson('/topic/getTopicList');
+    };
+
+    var list = $('#list');
+    var add = $('#add');
+    var input = $('#topicInput');
+
+    var initList = function(res) {
+      list.empty(); 
+      res.data.forEach(function(item) {
+        const $item = $('<div>', {
+          id: item._id,
+          class: 'item',
+        });
+        $item.attr('title', item.name);
+        $item.append($('<span>', { class: 'count', text: item.count + '赞' }));
+        $item.append($('<span>', { class: 'name', text: item.name }));
+        $item.append($('<span>', { class: 'like', text: '单击点赞哦！' }))
+        list.append($item);
+      });
+    };
+
+    getTopics().then(initList);
+
+    add.on('submit', function(event) {
+      event.preventDefault();
+      if (input.val()) {
+        addTopic(input.val())
+         .then(initList);
+      }
+    });
+    list.on('click', '.item', function(event) {
+      likeTopic($(this).attr('id'))
+        .then(initList);
+    });
+  }());
+</script>
+</body>
+</html>
